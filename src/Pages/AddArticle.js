@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import marked from "marked";
 import "../static/css/AddArticle.css";
-import { Button, Row, Col, Select, Input, DatePicker } from "antd";
+import { Button, Row, Col, Select, Input, DatePicker,message } from "antd";
+
+import 'moment/locale/zh-cn';
+import locale from 'antd/lib/date-picker/locale/zh_CN';
 import servicePath from "./../config/apiUrl";
 import  axios  from "axios";
 
@@ -34,18 +37,19 @@ const AddArticle = props => {
     smartLists: true,
     smartypants: false
   });
-
+  //及时同步内容
   const changeContent = e => {
     setArticleContent(e.target.value);
     let html = marked(e.target.value);
     setMarkdownContent(html);
   };
-
+ //及时同步简介
   const changeIntroduce = e => {
     setIntroducemd(e.target.value);
     let html = marked(e.target.value);
     setIntroducehtml(html);
   };
+  //根据权限获取类别
   const getTypeInfo = () => {
     axios({
       method: "get",
@@ -61,6 +65,58 @@ const AddArticle = props => {
       }
     });
   };
+  const changeType=value=>{
+    setSelectType(value)
+  }
+
+  //保存文章
+  const saveArticle = ()=>{ 
+  
+    if(selectedType==='请选择类型'){
+        message.error('必须选择文章类别')
+        return false
+    }else if(!articleTitle){
+        message.error('文章名称不能为空')
+        return false
+    }else if(!articleContent){
+        message.error('文章内容不能为空')
+        return false
+    }else if(!introducemd){
+        message.error('简介不能为空')
+        return false
+    }else if(!showDate){
+        message.error('发布日期不能为空')
+        return false
+    }
+
+    let datetext= showDate.replace('-','/') //把字符串转换成时间戳
+    let dataProps={
+      type_id:Number(selectedType),
+      title:articleTitle,
+      article_content:articleContent,
+      introduce:introducemd,
+      addTime:(new Date(datetext).getTime())/1000,
+    }
+    if (articleId===0) {
+      dataProps.view_count=Math.ceil(Math.random()*100)
+      axios({
+        method:'post',
+        url:servicePath.addArticle,
+        headers:{'Access-Control-Allow-Origin':'*'},
+        withCredentials:true,
+        data:dataProps
+      }).then(res=>{
+        setArticleId(res.data.insertId)
+        if (res.data.isSuccess) {
+          message.success('文章发布成功')
+        }else{
+          message.success('文章发布失败')
+        }
+      })
+    } else {
+      
+    }
+}
 
   return (
     <div>
@@ -68,11 +124,11 @@ const AddArticle = props => {
         <Col span={18}>
           <Row gutter={10}>
             <Col span={20}>
-              <Input placeholder="博客标题" size="large" />
+              <Input placeholder="博客标题" size="large" onChange={e=>setArticleTitle(e.target.value)} />
             </Col>
             <Col span={4}>
               &nbsp;
-              <Select defaultValue={selectedType} size="large" >
+              <Select defaultValue={selectedType} size="large" onChange={changeType}>
                {
                  typeInfo&&typeInfo.map((item,index)=>{
                    return (
@@ -108,7 +164,7 @@ const AddArticle = props => {
           <Row>
             <Col span={24}>
               <Button size="large">暂存文章</Button>&nbsp;
-              <Button type="primary" size="large">
+              <Button type="primary" size="large" onClick={saveArticle}>
                 发布文章
               </Button>
               <br />
@@ -132,7 +188,9 @@ const AddArticle = props => {
 
             <Col span={12}>
               <div className="date-select">
-                <DatePicker placeholder="发布日期" size="large" />
+                <DatePicker locale={locale} placeholder="发布日期" size="large" onChange={(date,dateString)=>{
+                  setShowDate(dateString)
+                }}/>
               </div>
             </Col>
           </Row>
