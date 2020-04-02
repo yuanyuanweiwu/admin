@@ -90,13 +90,12 @@ const AddArticle = props => {
         return false
     }
 
-    let datetext= showDate.replace('-','/') //把字符串转换成时间戳
     let dataProps={
       type_id:Number(selectedType),
       title:articleTitle,
       article_content:articleContent,
       introduce:introducemd,
-      addTime:(new Date(datetext).getTime())/1000,
+      addTime:String(Date.parse(new Date(showDate.replace(/-/g, "/")))),
     }
     if (articleId===0) {
       dataProps.view_count=Math.ceil(Math.random()*100)
@@ -120,7 +119,8 @@ const AddArticle = props => {
         method:'post',
         url:servicePath.updateArticle,
         headers:{'Access-Control-Allow-Origin':'*'},
-        withCredentials:true
+        withCredentials:true,
+        data:dataProps
       }).then(res=>{
         if (res.data.isSuccess) {
           message.success('文章保存成功')
@@ -145,7 +145,7 @@ const AddArticle = props => {
                {
                  typeInfo&&typeInfo.map((item,index)=>{
                    return (
-                     <Option key={index} value={item.Id}>{item.typeName}</Option>
+                     <Option key={index} value={item.id}>{item.typeName}</Option>
                    )
                  })
                }
@@ -203,6 +203,7 @@ const AddArticle = props => {
               <div className="date-select">
                 <DatePicker locale={locale} placeholder="发布日期" size="large" onChange={(date,dateString)=>{
                   setShowDate(dateString)
+                  
                 }}/>
               </div>
             </Col>

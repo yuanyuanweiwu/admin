@@ -2,31 +2,22 @@ import React, { useEffect, useState } from "react";
 import { Row, Col, Table, Button, Modal, Tag } from "antd";
 import axios from "axios";
 import servicePath from "./../config/apiUrl";
+import moment from 'moment'
 
 const ArticleList = props => {
   const [artList, setArtList] = useState([]);
 
-  const format = fmt => {
-    var o = {
-      "M+": this.getMonth() + 1, // 月份
-      "d+": this.getDate(), // 日
-      "h+": this.getHours(), // 小时
-      "m+": this.getMinutes(), // 分
-      "s+": this.getSeconds(), // 秒
-      "q+": Math.floor((this.getMonth() + 3) / 3), // 季度
-      S: this.getMilliseconds() // 毫秒
-    };
-    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, this.getFullYear() + "");
-    for (var k in o)
-      if (new RegExp("(" + k + ")").test(fmt))
-        fmt = fmt.replace(
-          RegExp.$1,
-          RegExp.$1.length == 1
-            ? o[k]
-            : ("00" + o[k]).substr(("" + o[k]).length)
-        );
-    return fmt;
-  };
+  useEffect(()=>{
+      axios({
+          method:'get',
+          url:servicePath.getArticleList,
+          withCredentials:true,
+          header:{ 'Access-Control-Allow-Origin':'*' }
+      }).then(res=>{
+          setArtList(res.data.list)
+      })
+  },[])
+
 
   const changeArticle = () => {};
 
@@ -35,11 +26,11 @@ const ArticleList = props => {
   const handleTag = text => {
     switch (text) {
       case 1:
-        return <Tag color="geekblue">{text}</Tag>;
+        return <Tag color="geekblue">{'生活'}</Tag>;
       case 2:
-        return <Tag color="green">{text}</Tag>;
+        return <Tag color="green">{'摄影'}</Tag>;
       case 3:
-        return <Tag color="volcano">{text}</Tag>;
+        return <Tag color="volcano">{'美食'}</Tag>;
     }
   };
   const columns = [
@@ -57,7 +48,7 @@ const ArticleList = props => {
       title: "发布时间",
       dataIndex: "addTime",
       key: "addTime",
-      render: text => <span>{format(text)}</span>
+      render: text => <span>{moment(Number(text)).format('YYYY-MM-DD')}</span>
     },
     {
       title: "类型",
@@ -70,7 +61,7 @@ const ArticleList = props => {
       key: "action",
       render: (text, record) => (
         <span>
-          <a onClick={changeArticle}>修改</a>
+          <a onClick={changeArticle} style={{marginRight:'20px'}}>修改</a>
           <a onClick={deletArticle}>删除</a>
         </span>
       )
@@ -78,7 +69,7 @@ const ArticleList = props => {
   ];
   return (
     <div>
-      <Table columns={columns} dataSource={artList} />
+      <Table columns={columns} dataSource={artList}  rowKey={record => record.id} />
     </div>
   );
 };

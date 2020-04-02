@@ -44,7 +44,7 @@ const Login = (props) => {
     <div className="login-div">
       <Spin tip="Loading..." spinning={isLoading}>
         <Card
-          title="JSPang Blog  System"
+          title="YYWW Blog  System"
           bordered={true}
           style={{ width: 400 }}
         >
