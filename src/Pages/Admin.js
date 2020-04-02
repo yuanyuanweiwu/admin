@@ -10,15 +10,23 @@ import {
 } from "@ant-design/icons";
 import { Route } from "react-router-dom";
 import AddArticle from "./AddArticle";
+import ArticleList from "./ArticleList";
 
 const { Header, Content, Footer, Sider } = Layout;
 const { SubMenu, Item } = Menu;
 
-const Admin = () => {
+const Admin = (props) => {
   const [collapsed, setCollapsed] = useState(false);
   const toggle = () => {
     setCollapsed(!collapsed);
   };
+  const handleClickArticle=e=>{
+    if(e.key=='addArticle'){
+      props.history.push('/index/add')
+    }else{
+      props.history.push('/index/list')
+    }
+  }
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider trigger={null} collapsible collapsed={collapsed}>
@@ -31,6 +39,7 @@ const Admin = () => {
 
           <SubMenu
             key="sub1"
+            onClick={handleClickArticle}
             title={
               <span>
                 <DesktopOutlined />
@@ -38,8 +47,8 @@ const Admin = () => {
               </span>
             }
           >
-            <Item key="2">文章列表</Item>
-            <Item key="3">添加文章</Item>
+            <Item key="ArticleList">文章列表</Item>
+            <Item key="addArticle">添加文章</Item>
           </SubMenu>
           <Item key="9">
             <UploadOutlined />
@@ -70,9 +79,11 @@ const Admin = () => {
             <div style={{ padding: 24, background: "#fff", minHeight: 360 }}>
               <div>
                 <Route path="/index/" exact component={AddArticle} />
+                <Route path="/index/add/" exact component={AddArticle} />
+                <Route path="/index/add/:id" exact component={AddArticle} />
+                <Route path="/index/list/" component={ArticleList} />
               </div>
             </div>
-         
           </div>
         </Content>
         <Footer style={{ textAlign: "center" }}>

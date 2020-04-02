@@ -24,6 +24,7 @@ const AddArticle = props => {
 
   useEffect(() => {
     getTypeInfo();
+
   }, []);
 
   const renderer = new marked.Renderer();
@@ -114,7 +115,19 @@ const AddArticle = props => {
         }
       })
     } else {
-      
+      dataProps.id=articleId
+      axios({
+        method:'post',
+        url:servicePath.updateArticle,
+        headers:{'Access-Control-Allow-Origin':'*'},
+        withCredentials:true
+      }).then(res=>{
+        if (res.data.isSuccess) {
+          message.success('文章保存成功')
+        } else {
+          message.error('文章保存失败')
+        }
+      })
     }
 }
 
