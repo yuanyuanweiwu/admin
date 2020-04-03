@@ -5,6 +5,9 @@ let servicePath = {
     getTypeInfo:ipUrl+'getTypeInfo',
     addArticle:ipUrl+'addArticle',
     updateArticle:ipUrl+'updateArticle',
-    getArticleList:ipUrl+'getArticleList'
+    getArticleList:ipUrl+'getArticleList',
+    delArticle:ipUrl + 'delArticle/' ,
+    getArticleByID:ipUrl+'getArticleByID/'
+
 }
 export default servicePath;

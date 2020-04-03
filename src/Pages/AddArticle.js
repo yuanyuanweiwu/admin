@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import marked from "marked";
 import "../static/css/AddArticle.css";
-import { Button, Row, Col, Select, Input, DatePicker,message } from "antd";
+import { Button, Row, Col, Select, Input, DatePicker, message } from "antd";
 
-import 'moment/locale/zh-cn';
-import locale from 'antd/lib/date-picker/locale/zh_CN';
+import "moment/locale/zh-cn";
+import moment from 'moment'
+import locale from "antd/lib/date-picker/locale/zh_CN";
 import servicePath from "./../config/apiUrl";
-import  axios  from "axios";
+import axios from "axios";
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -20,11 +21,15 @@ const AddArticle = props => {
   const [showDate, setShowDate] = useState(); //发布日期
   const [updateDate, setUpdateDate] = useState(); //修改日志的日期
   const [typeInfo, setTypeInfo] = useState([]); // 文章类别信息
-  const [selectedType, setSelectType] = useState('请选择类型'); //选择的文章类别
+  const [selectedType, setSelectType] = useState("请选择类型"); //选择的文章类别
 
   useEffect(() => {
     getTypeInfo();
-
+    let id = props.match.params.id;
+    if (id) {
+      setArticleId(id);
+      getArticleByID(id);
+    }
   }, []);
 
   const renderer = new marked.Renderer();
@@ -44,7 +49,7 @@ const AddArticle = props => {
     let html = marked(e.target.value);
     setMarkdownContent(html);
   };
- //及时同步简介
+  //及时同步简介
   const changeIntroduce = e => {
     setIntroducemd(e.target.value);
     let html = marked(e.target.value);
@@ -66,70 +71,96 @@ const AddArticle = props => {
       }
     });
   };
-  const changeType=value=>{
-    setSelectType(value)
-  }
+  const changeType = value => {
+    setSelectType(value);
+  };
 
   //保存文章
-  const saveArticle = ()=>{ 
-  
-    if(selectedType==='请选择类型'){
-        message.error('必须选择文章类别')
-        return false
-    }else if(!articleTitle){
-        message.error('文章名称不能为空')
-        return false
-    }else if(!articleContent){
-        message.error('文章内容不能为空')
-        return false
-    }else if(!introducemd){
-        message.error('简介不能为空')
-        return false
-    }else if(!showDate){
-        message.error('发布日期不能为空')
-        return false
+  const saveArticle = () => {
+    if (selectedType === "请选择类型") {
+      message.error("必须选择文章类别",2);
+      return false;
+    } else if (!articleTitle) {
+      message.error("文章名称不能为空",2);
+      return false;
+    } else if (!articleContent) {
+      message.error("文章内容不能为空",2);
+      return false;
+    } else if (!introducemd) {
+      message.error("简介不能为空",2);
+      return false;
+    } else if (!showDate) {
+      message.error("发布日期不能为空",2);
+      return false;
     }
 
-    let dataProps={
-      type_id:Number(selectedType),
-      title:articleTitle,
-      article_content:articleContent,
-      introduce:introducemd,
-      addTime:String(Date.parse(new Date(showDate.replace(/-/g, "/")))),
-    }
-    if (articleId===0) {
-      dataProps.view_count=Math.ceil(Math.random()*100)
+    let dataProps = {
+      type_id: Number(selectedType),
+      title: articleTitle,
+      article_content: articleContent,
+      introduce: introducemd,
+      addTime: String(Date.parse(new Date(showDate.replace(/-/g, "/"))))
+    };
+    if (articleId === 0) {
+      dataProps.view_count = Math.ceil(Math.random() * 100);
       axios({
-        method:'post',
-        url:servicePath.addArticle,
-        headers:{'Access-Control-Allow-Origin':'*'},
-        withCredentials:true,
-        data:dataProps
-      }).then(res=>{
-        setArticleId(res.data.insertId)
+        method: "post",
+        url: servicePath.addArticle,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        withCredentials: true,
+        data: dataProps
+      }).then(res => {
+        setArticleId(res.data.insertId);
         if (res.data.isSuccess) {
-          message.success('文章发布成功')
-        }else{
-          message.success('文章发布失败')
-        }
-      })
-    } else {
-      dataProps.id=articleId
-      axios({
-        method:'post',
-        url:servicePath.updateArticle,
-        headers:{'Access-Control-Allow-Origin':'*'},
-        withCredentials:true,
-        data:dataProps
-      }).then(res=>{
-        if (res.data.isSuccess) {
-          message.success('文章保存成功')
+          message.success("文章发布成功",2);
+          setTimeout(() => {
+            props.history.push('/index/list')
+          }, 3000);
         } else {
-          message.error('文章保存失败')
+          message.success("文章发布失败",2);
+        }
+      });
+    } else {
+      dataProps.id = articleId;
+      axios({
+        method: "post",
+        url: servicePath.updateArticle,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        withCredentials: true,
+        data: dataProps
+      }).then(res => {
+        if (res.data.isSuccess) {
+          message.success("文章保存成功",2);
+          setTimeout(() => {
+            props.history.push('/index/list')
+          }, 3000);
+         
+        } else {
+          message.error("文章保存失败",2);
+        }
+      });
+    }
+  };
+  const getArticleByID = id => {
+    axios(servicePath.getArticleByID + id, {
+      withCredentials: true,
+      header: { "Access-Control-Allow-Origin": "*" }
+    })
+      .then(res => {
+        if (res.status === 200) {   
+          setArticleTitle(res.data.data[0].title);
+          setArticleContent(res.data.data[0].article_content);
+          let html = marked(res.data.data[0].article_content);
+          setMarkdownContent(html);
+          setIntroducemd(res.data.data[0].introduce);
+          let tmpInt = marked(res.data.data[0].introduce);
+          setIntroducehtml(tmpInt);
+          setShowDate(moment(Number(res.data.data[0].addTime)).format('YYYY-MM-DD'));
+          setSelectType(res.data.data[0].typeId);
         }
       })
-    }
-}
+      .catch(err => console.log(err.message));
+  };
 
   return (
     <div>
@@ -137,18 +168,28 @@ const AddArticle = props => {
         <Col span={18}>
           <Row gutter={10}>
             <Col span={20}>
-              <Input placeholder="博客标题" size="large" onChange={e=>setArticleTitle(e.target.value)} />
+              <Input
+                placeholder="博客标题"
+                size="large"
+                onChange={e => setArticleTitle(e.target.value)}
+                value={articleTitle}
+              />
             </Col>
             <Col span={4}>
               &nbsp;
-              <Select defaultValue={selectedType} size="large" onChange={changeType}>
-               {
-                 typeInfo&&typeInfo.map((item,index)=>{
-                   return (
-                     <Option key={index} value={item.id}>{item.typeName}</Option>
-                   )
-                 })
-               }
+              <Select
+                value={selectedType}
+                size="large"
+                onChange={changeType}
+              >
+                {typeInfo &&
+                  typeInfo.map((item, index) => {
+                    return (
+                      <Option key={index} value={item.id}>
+                        {item.typeName}
+                      </Option>
+                    );
+                  })}
               </Select>
             </Col>
           </Row>
@@ -201,10 +242,15 @@ const AddArticle = props => {
 
             <Col span={12}>
               <div className="date-select">
-                <DatePicker locale={locale} placeholder="发布日期" size="large" onChange={(date,dateString)=>{
-                  setShowDate(dateString)
-                  
-                }}/>
+                <DatePicker
+                  locale={locale}
+                  placeholder="发布日期"
+                  size="large"
+                  value={moment(showDate)}
+                  onChange={(date, dateString) => {
+                    setShowDate(dateString);
+                  }}
+                />
               </div>
             </Col>
           </Row>
